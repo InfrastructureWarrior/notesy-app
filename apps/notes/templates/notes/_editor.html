@@ -7,8 +7,9 @@
     id="note-{{ note.pk }}"
   {% else %}
     hx-post="{% url 'note_create' %}"
-    hx-target="#new-note-slot"
-    hx-swap="innerHTML"
+    hx-target="#note-list"
+    hx-swap="afterbegin"
+    hx-on::after-request="if (event.detail.successful) { this.reset(); }"
   {% endif %}
   hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
   <p><input name="title" placeholder="Title" value="{{ note.title|default:'' }}" data-autofocus></p>

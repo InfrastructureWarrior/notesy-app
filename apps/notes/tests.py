@@ -50,3 +50,44 @@ def test_users_cannot_see_other_notes(client, db):
     Note.objects.create(owner=other, title="Bob's secret", body="hidden")
     response = client.get("/")
     assert b"Bob's secret" not in response.content
+
+@pytest.mark.django_db
+def test_user_cannot_edit_other_users_note(client, db):
+    User = get_user_model()
+
+    bob = User.objects.create_user(username="bob", password="hunter2")
+
+    note = Note.objects.create(
+        owner=bob,
+        title="Bob's secret",
+        body="hidden",
+    )
+
+    response = client.post(
+        f"/notes/{note.pk}/edit/",
+        {"title": "Hacked", "body": "changed"},
+    )
+
+    assert response.status_code == 404
+
+    note.refresh_from_db()
+    assert note.title == "Bob's secret"
+    assert note.body == "hidden"
+
+
+@pytest.mark.django_db
+def test_user_cannot_delete_other_users_note(client, db):
+    User = get_user_model()
+
+    bob = User.objects.create_user(username="bob", password="hunter2")
+
+    note = Note.objects.create(
+        owner=bob,
+        title="Bob's secret",
+        body="hidden",
+    )
+
+    response = client.delete(f"/notes/{note.pk}/delete/")
+
+    assert response.status_code == 404
+    assert Note.objects.filter(pk=note.pk).exists()

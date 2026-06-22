@@ -1,16 +1,22 @@
 """Django settings for notesy."""
 import os
+import sys
 from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+SECRET_KEY = os.getenv("SECRET_KEY")
 
-SECRET_KEY = "django-insecure-replace-me-eventually-l0lz-h4xx-9000"
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
-DEBUG = True
-
-ALLOWED_HOSTS = ["*"]
-
+ALLOWED_HOSTS = os.getenv(
+    "ALLOWED_HOSTS",
+    "localhost,127.0.0.1",
+).split(",")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -52,19 +58,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "notesy.wsgi.application"
 
-
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("POSTGRES_DB"),
+        "USER": os.getenv("POSTGRES_USER"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
+        "HOST": os.getenv("POSTGRES_HOST", "db"),
+        "PORT": os.getenv("POSTGRES_PORT", "5432"),
     }
 }
 
+if any("pytest" in arg for arg in sys.argv):
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "test_db.sqlite3",
+        }
+    }
 
-SESSION_ENGINE = "django.contrib.sessions.backends.file"
-SESSION_FILE_PATH = str(BASE_DIR / ".sessions")
-os.makedirs(SESSION_FILE_PATH, exist_ok=True)
-
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -76,13 +89,20 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_DIRS = [BASE_DIR / "static"]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+CSRF_TRUSTED_ORIGINS = os.getenv(
+    "CSRF_TRUSTED_ORIGINS",
+    "",
+).split(",")
+
+CSRF_TRUSTED_ORIGINS = [
+    origin for origin in CSRF_TRUSTED_ORIGINS
+    if origin
+]
 
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/"

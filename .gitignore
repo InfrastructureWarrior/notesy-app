@@ -5,3 +5,9 @@ db.sqlite3
 node_modules/
 .venv/
 venv/
+
+.env
+.sessions/
+staticfiles/
+*.log
+.DS_Store
